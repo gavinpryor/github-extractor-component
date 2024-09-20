@@ -1,0 +1,1 @@
+https://github.com/gavinpryor/github-extractor-component/blob/master/LICENSE.md
