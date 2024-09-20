@@ -1,1 +1,0 @@
-# github-extractor-component
