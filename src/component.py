@@ -7,8 +7,10 @@ from keboola.component import ComponentBase
 # Define the main component class for the GitHub Extractor
 class GitHubExtractor(ComponentBase):
 
+
     def __init__(self):
         super().__init__()
+
 
     def run(self):
         """
@@ -19,9 +21,6 @@ class GitHubExtractor(ComponentBase):
         token = self.configuration.parameters['#token']  # github personal access token
         owner = self.configuration.parameters['owner']  # github repository owner
         repo = self.configuration.parameters['repo']  # github repository name
-
-        # Base URL for GitHub API
-        base_url = f"https://api.github.com/repos/{owner}/{repo}/contents/"
 
         # Headers for the API request
         headers = {
@@ -137,6 +136,7 @@ class GitHubExtractor(ComponentBase):
 
 # Execute the component
 if __name__ == "__main__":
+
     # Create an instance of the GitHubExtractor and run it
     extractor = GitHubExtractor()
     extractor.execute()
