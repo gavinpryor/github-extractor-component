@@ -3,10 +3,10 @@ on: [ push ]
 concurrency: ci-${{ github.ref }} # to avoid tag collisions in the ECR
 env:
   # repository variables:
-  KBC_DEVELOPERPORTAL_APP: "keboola.ex-service-name" # replace with your component id
-  KBC_DEVELOPERPORTAL_VENDOR: "keboola" # replace with your vendor
+  KBC_DEVELOPERPORTAL_APP: ${{ secrets.KBC_DEVELOPERPORTAL_APP }}
+  KBC_DEVELOPERPORTAL_VENDOR: ${{ secrets.KBC_DEVELOPERPORTAL_VENDOR }}
   DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-  KBC_DEVELOPERPORTAL_USERNAME: ${{ vars.KBC_DEVELOPERPORTAL_USERNAME }}
+  KBC_DEVELOPERPORTAL_USERNAME: ${{ secrets.KBC_DEVELOPERPORTAL_USERNAME }}
 
   # repository secrets:
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }} # recommended for pushing to ECR
