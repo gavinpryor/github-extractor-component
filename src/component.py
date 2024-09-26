@@ -9,14 +9,12 @@ class GitHubExtractor(ComponentBase):
 
 
     def __init__(self):
+
+
         super().__init__()
 
 
     def run(self):
-        """
-        Main execution code
-        """
-
         # Fetch the parameters from the configuration
         token = self.configuration.parameters['#token']  # github personal access token
         owner = self.configuration.parameters['owner']  # github repository owner
@@ -139,4 +137,6 @@ if __name__ == "__main__":
 
     # Create an instance of the GitHubExtractor and run it
     extractor = GitHubExtractor()
+
+    
     extractor.execute()
