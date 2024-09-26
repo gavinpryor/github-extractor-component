@@ -1,28 +1,13 @@
-"""
-Template Component main class.
-
-"""
-import csv
-from datetime import datetime
+import os
 import logging
+import requests
+import base64
+import csv
+from keboola.component import ComponentBase
+from typing import List, Dict
 
-from keboola.component.base import ComponentBase
-from keboola.component.exceptions import UserException
-
-from configuration import Configuration
-
-
-class Component(ComponentBase):
-    """
-        Extends base class for general Python components. Initializes the CommonInterface
-        and performs configuration validation.
-
-        For easier debugging the data folder is picked up by default from `../data` path,
-        relative to working directory.
-
-        If `debug` parameter is present in the `config.json`, the default logger is set to verbose DEBUG mode.
-    """
-
+# Define the main component class for the GitHub Extractor
+class GitHubExtractor(ComponentBase):
     def __init__(self):
         super().__init__()
 
@@ -31,70 +16,128 @@ class Component(ComponentBase):
         Main execution code
         """
 
-        # ####### EXAMPLE TO REMOVE
-        # check for missing configuration parameters
-        params = Configuration(**self.configuration.parameters)
+        # fetch the parameters from the configuration
+        token = self.configuration.parameters['#token']  # github personal access token
+        owner = self.configuration.parameters['owner']  # github repository owner
+        repo = self.configuration.parameters['repo']  # github repository name
 
-        # Access parameters in configuration
-        if params.print_hello:
-            logging.info("Hello World")
+        # file_paths = self.configuration.parameters.get('file_paths', [])  # list of file paths to retrieve
 
-        # get input table definitions
-        input_tables = self.get_input_tables_definitions()
-        for table in input_tables:
-            logging.info(f'Received input table: {table.name} with path: {table.full_path}')
+        # base url for github api
+        base_url = f"https://api.github.com/repos/{owner}/{repo}/contents/"
+        
+        # headers for the api request
+        headers = {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
 
-        if len(input_tables) == 0:
-            raise UserException("No input tables found")
+        def get_file_content(owner, repo, path):
+            url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+            headers = {"Authorization": f"token {token}"}
+            response = requests.get(url, headers=headers)
+            if response != 200:
+                logging.error(f"Failed to fetch file: {path} with status code: {response.status_code}")
+                return None
 
-        # get last state data/in/state.json from previous run
-        previous_state = self.get_state_file()
-        logging.info(previous_state.get('some_parameter'))
+            content = response.json()
 
-        # Create output table (Table definition - just metadata)
-        table = self.create_out_table_definition('output.csv', incremental=True, primary_key=['timestamp'])
+            if content.get('encoding') == 'base64':
+                if is_binary_file(content['name']):
+                    logging.info(f"Skipping binary file: {path}")
+                    return None
+                else:
+                    try:
+                        return base64.b64decode(content['content']).decode('utf-8')
+                    except UnicodeDecodeError:
+                        logging.info(f"Unable to decode binary file: {path}")
+                        return None
 
-        # get file path of the table (data/out/tables/Features.csv)
-        out_table_path = table.full_path
-        logging.info(out_table_path)
+            return ""
 
-        # Add timestamp column and save into out_table_path
-        input_table = input_tables[0]
-        with (open(input_table.full_path, 'r') as inp_file,
-              open(table.full_path, mode='wt', encoding='utf-8', newline='') as out_file):
-            reader = csv.DictReader(inp_file)
+        def is_binary_file(filename):
+            binary_extensions = ['png', 'jpg', 'jpeg', 'gif', 'pdf', 'zip', 'tar', 'exe']
+            extension = filename.split('.')[-1].lower()
+            return extension in binary_extensions
 
-            columns = list(reader.fieldnames)
-            # append timestamp
-            columns.append('timestamp')
+        def write_to_csv(data, output_table_path):
+            column_names = ['repo_name', 'file_path', 'filename', 'language', 'code', 'url']
+            with open(output_table_path, mode='w', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=column_names)
+                writer.writeheader()
+                writer.writerows(data)
 
-            # write result with column added
-            writer = csv.DictWriter(out_file, fieldnames=columns)
-            writer.writeheader()
-            for in_row in reader:
-                in_row['timestamp'] = datetime.now().isoformat()
-                writer.writerow(in_row)
+        def get_language(file_extension):
+            extension_language_map = {
+                'py': 'Python',
+                'js': 'JavaScript',
+                'html': 'HTML',
+                'css': 'CSS',
+                'java': 'Java',
+                'cpp': 'C++',
+                'c': 'C',
+                'cs': 'C#',
+                'rb': 'Ruby',
+                'php': 'PHP',
+                'ts': 'TypeScript',
+                'go': 'Go',
+                'rs': 'Rust',
+                'swift': 'Swift',
+                'kt': 'Kotlin',
+                'sh': 'Shell',
+                'r': 'R',
+                'pl': 'Perl',
+                'scala': 'Scala',
+                'sql': 'SQL',
+                'md': 'Markdown',
+                'xml': 'XML',
+                'yml': 'YAML',
+                'json': 'JSON',
+                'txt': 'Text',
+                'ipynb': 'Jupyter Notebook',
+                'gitignore': 'GitIgnore'
+            }
 
-        # Save table manifest (output.csv.manifest) from the Table definition
-        self.write_manifest(table)
+            return extension_language_map.get(file_extension.lower(), 'Unknown')
 
-        # Write new state - will be available next run
-        self.write_state_file({"some_state_parameter": "value"})
+        def extract(owner, repo, path=""):
+            url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+            headers = {"Authorization": f"token {token}"}
+            response = requests.get(url, headers=headers)
+            contents = response.json()
 
-        # ####### EXAMPLE TO REMOVE END
+            if isinstance(contents, list):
+                for item in contents:
+                    item_path = item['path']
+                    if item['type'] == 'dir':
+                        logging.info(f"Exploring directory: {item_path}")
+                        extract(owner, repo, item_path)
+                    else:
+                        # Fetch file content
+                        logging.info(f"Fetching file: {item_path}")
+                        code = get_file_content(owner, repo, item_path)
+                        if code:
+                            repo_data.append({
+                                'repo_name': repo,
+                                'file_path': item_path,
+                                'filename': item['name'],
+                                'language': get_language(item['name'].split('.')[-1]),
+                                'code': code,
+                                'url': item['html_url']
+                            })
 
 
-"""
-        Main entrypoint
-"""
+        # main
+        repo_data = []
+        extract("gavinpryor", "gavin-component-test")
+        output_table = self.create_out_table_definition(f"{owner}-{repo}-repodata.csv", primary_key=['file_path'])
+        output_table_path = output_table.full_path
+
+        write_to_csv(repo_data, output_table_path)
+        self.write_manifest(output_table)
+
+# Execute the component
 if __name__ == "__main__":
-    try:
-        comp = Component()
-        # this triggers the run method by default and is controlled by the configuration.action parameter
-        comp.execute_action()
-    except UserException as exc:
-        logging.exception(exc)
-        exit(1)
-    except Exception as exc:
-        logging.exception(exc)
-        exit(2)
+    # Create an instance of the GitHubExtractor and run it
+    extractor = GitHubExtractor()
+    extractor.execute() 
