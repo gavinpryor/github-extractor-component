@@ -1,13 +1,12 @@
-import os
 import logging
 import requests
 import base64
 import csv
 from keboola.component import ComponentBase
-from typing import List, Dict
 
 # Define the main component class for the GitHub Extractor
 class GitHubExtractor(ComponentBase):
+
     def __init__(self):
         super().__init__()
 
@@ -16,17 +15,15 @@ class GitHubExtractor(ComponentBase):
         Main execution code
         """
 
-        # fetch the parameters from the configuration
+        # Fetch the parameters from the configuration
         token = self.configuration.parameters['#token']  # github personal access token
         owner = self.configuration.parameters['owner']  # github repository owner
         repo = self.configuration.parameters['repo']  # github repository name
 
-        # file_paths = self.configuration.parameters.get('file_paths', [])  # list of file paths to retrieve
-
-        # base url for github api
+        # Base URL for GitHub API
         base_url = f"https://api.github.com/repos/{owner}/{repo}/contents/"
-        
-        # headers for the api request
+
+        # Headers for the API request
         headers = {
             'Authorization': f'token {token}',
             'Accept': 'application/vnd.github.v3+json'
@@ -34,9 +31,8 @@ class GitHubExtractor(ComponentBase):
 
         def get_file_content(owner, repo, path):
             url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-            headers = {"Authorization": f"token {token}"}
             response = requests.get(url, headers=headers)
-            if response != 200:
+            if response.status_code != 200:
                 logging.error(f"Failed to fetch file: {path} with status code: {response.status_code}")
                 return None
 
@@ -102,7 +98,6 @@ class GitHubExtractor(ComponentBase):
 
         def extract(owner, repo, path=""):
             url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-            headers = {"Authorization": f"token {token}"}
             response = requests.get(url, headers=headers)
             contents = response.json()
 
@@ -126,13 +121,17 @@ class GitHubExtractor(ComponentBase):
                                 'url': item['html_url']
                             })
 
-
-        # main
+        # Main logic
         repo_data = []
-        extract("gavinpryor", "gavin-component-test")
+
+        # Extract file data
+        extract(owner, repo)
+
+        # Create output table
         output_table = self.create_out_table_definition(f"{owner}-{repo}-repodata.csv", primary_key=['file_path'])
         output_table_path = output_table.full_path
 
+        # Write data to the output table
         write_to_csv(repo_data, output_table_path)
         self.write_manifest(output_table)
 
@@ -140,4 +139,4 @@ class GitHubExtractor(ComponentBase):
 if __name__ == "__main__":
     # Create an instance of the GitHubExtractor and run it
     extractor = GitHubExtractor()
-    extractor.execute() 
+    extractor.execute()
