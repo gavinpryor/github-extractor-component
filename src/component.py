@@ -7,9 +7,9 @@ from keboola.component import ComponentBase
 # Define the main component class for the GitHub Extractor
 class GitHubExtractor(ComponentBase):
 
+
     def __init__(self):
         super().__init__()
-
 
     def run(self):
         # Fetch the parameters from the configuration
@@ -132,8 +132,8 @@ class GitHubExtractor(ComponentBase):
 # Execute the component
 if __name__ == "__main__":
 
+
     # Create an instance of the GitHubExtractor and run it
     extractor = GitHubExtractor()
-
 
     extractor.execute()
