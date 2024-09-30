@@ -4,18 +4,18 @@ import base64
 import csv
 from keboola.component import ComponentBase
 
+
 # Define the main component class for the GitHub Extractor
 class GitHubExtractor(ComponentBase):
-
 
     def __init__(self):
         super().__init__()
 
     def run(self):
         # Fetch the parameters from the configuration
-        token = self.configuration.parameters['#token']  # github personal access token
-        owner = self.configuration.parameters['owner']  # github repository owner
-        repo = self.configuration.parameters['repo']  # github repository name
+        token = self.configuration.parameters['#token']  # GitHub personal access token
+        owner = self.configuration.parameters['owner']  # GitHub repository owner
+        repo = self.configuration.parameters['repo']  # GitHub repository name
 
         # Headers for the API request
         headers = {
@@ -87,7 +87,6 @@ class GitHubExtractor(ComponentBase):
                 'ipynb': 'Jupyter Notebook',
                 'gitignore': 'GitIgnore'
             }
-
             return extension_language_map.get(file_extension.lower(), 'Unknown')
 
         def extract(owner, repo, path=""):
@@ -129,11 +128,10 @@ class GitHubExtractor(ComponentBase):
         write_to_csv(repo_data, output_table_path)
         self.write_manifest(output_table)
 
+
 # Execute the component
 if __name__ == "__main__":
 
-
     # Create an instance of the GitHubExtractor and run it
     extractor = GitHubExtractor()
-
     extractor.execute()
