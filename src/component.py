@@ -134,4 +134,4 @@ if __name__ == "__main__":
 
     # Create an instance of the GitHubExtractor and run it
     extractor = GitHubCodeExtractor()
-    extractor.execute()
+    extractor.run()
