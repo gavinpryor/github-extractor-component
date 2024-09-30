@@ -2,18 +2,35 @@
   "type": "object",
   "title": "extractor configuration",
   "required": [
-    "print_hello"
+    "#token",
+    "owner",
+    "repo"
   ],
   "properties": {
-    "print_hello": {
-      "type": "boolean",
-      "title": "Print Hello",
+    "#token": {
+      "type": "string",
+      "title": "GitHub Personal Access Token",
+      "description": "Your GitHub personal access token with the required repository permissions.",
       "propertyOrder": 1
+    },
+    "owner": {
+      "type": "string",
+      "title": "Repository Owner",
+      "description": "The GitHub username or organization that owns the repository.",
+      "propertyOrder": 2
+    },
+    "repo": {
+      "type": "string",
+      "title": "Repository Name",
+      "description": "The name of the repository you want to extract files from.",
+      "propertyOrder": 3
     },
     "debug": {
       "type": "boolean",
-      "title": "Debug",
-      "propertyOrder": 2
+      "title": "Debug Mode",
+      "description": "Enable debug logging for additional information.",
+      "default": false,
+      "propertyOrder": 4
     }
   }
 }
