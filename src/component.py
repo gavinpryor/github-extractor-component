@@ -120,7 +120,18 @@ class GitHubCodeExtractor(ComponentBase):
         extract(owner, repo)
 
         # Create output table
-        output_table = self.create_out_table_definition(f"{owner}-{repo}-repodata.csv", primary_key=['file_path'])
+        output_table = self.create_out_table_definition(
+            f"{owner}-{repo}-repodata.csv", 
+            primary_key=['file_path'],
+            column_names=[
+                'repo_name', 
+                'file_path', 
+                'filename', 
+                'language', 
+                'code', 
+                'url'
+            ]
+        )
         output_table_path = output_table.full_path
 
         # Write data to the output table
