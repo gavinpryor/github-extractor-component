@@ -1,4 +1,5 @@
 keboola.component
+keboola.component.interface
 keboola.utils
 keboola.http-client
 freezegun
