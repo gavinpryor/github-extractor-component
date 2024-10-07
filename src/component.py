@@ -1,8 +1,8 @@
 import logging
 import requests
 import base64
-import csv
 from keboola.component import ComponentBase
+import pandas as pd
 
 
 # Define the main component class for the GitHub Extractor
@@ -51,11 +51,10 @@ class GitHubCodeExtractor(ComponentBase):
             return extension in binary_extensions
 
         def write_to_csv(data, output_table_path):
-            column_names = ['repo_name', 'file_path', 'filename', 'language', 'code', 'url']
-            with open(output_table_path, mode='w', newline='', encoding='utf-8') as file:
-                writer = csv.DictWriter(file, fieldnames=column_names)
-                writer.writeheader()
-                writer.writerows(data)
+            df = pd.DataFrame(data)
+            column_order = ['repo_name', 'file_path', 'filename', 'language', 'code', 'url']
+            df = df[column_order]
+            df.to_csv(output_table_path, index=False, encoding='utf-8')
 
         def get_language(file_extension):
             extension_language_map = {
