@@ -25,12 +25,19 @@
       "description": "The name of the repository you want to extract files from.",
       "propertyOrder": 3
     },
+    "repo_type": {
+      "type": "string",
+      "title": "Repository Type",
+      "description": "Is the repository public or private?",
+      "enum": ["public", "private"],
+      "propertyOrder": 4
+    },
     "debug": {
       "type": "boolean",
       "title": "Debug Mode",
       "description": "Enable debug logging for additional information.",
       "default": false,
-      "propertyOrder": 4
+      "propertyOrder": 5
     }
   }
 }
